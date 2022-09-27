@@ -37,3 +37,46 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	)
 	return i, err
 }
+
+const getAccount = `-- name: GetAccount :one
+SELECT id, owner, balance, currency, created_at FROM accounts 
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetAccount(ctx context.Context, id int64) (Accounts, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, id)
+	var i Accounts
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listAccounts = `-- name: ListAccounts :one
+SELECT id, owner, balance, currency, created_at FROM accounts
+ORDER BY id
+LIMIT $1
+OFFSET $2
+`
+
+type ListAccountsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) (Accounts, error) {
+	row := q.db.QueryRowContext(ctx, listAccounts, arg.Limit, arg.Offset)
+	var i Accounts
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
+}
